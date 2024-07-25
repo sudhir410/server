@@ -58,8 +58,27 @@ jobs:
           NEW_CONTAINER_NAME=xhip-desk-app-$NEW_ENV
           docker run -d --name $NEW_CONTAINER_NAME ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
           
-          # Wait for the new container to be ready (using health check)
-          timeout 300 bash -c 'until curl -s http://localhost:3000/health | grep -q "OK"; do sleep 5; done'
+          echo "Waiting for container to become healthy..."
+          TIMEOUT=300
+          ELAPSED=0
+          INTERVAL=10
+          while [ $ELAPSED -lt $TIMEOUT ]; do
+            HEALTH_STATUS=$(docker inspect --format="{{.State.Health.Status}}" $NEW_CONTAINER_NAME)
+            echo "Current health status: $HEALTH_STATUS"
+            if [ "$HEALTH_STATUS" = "healthy" ]; then
+              echo "Container is healthy!"
+              break
+            fi
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+      
+          if [ $ELAPSED -ge $TIMEOUT ]; then
+            echo "Container did not become healthy within the timeout period"
+            echo "Container logs:"
+            docker logs $NEW_CONTAINER_NAME
+            exit 1
+          fi
           
           # Update the NGINX configuration to point to the new container
           sudo sed -i "s/xhip-desk-app-$OLD_ENV/xhip-desk-app-$NEW_ENV/" /etc/nginx/conf.d/default.conf
