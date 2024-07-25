@@ -64,11 +64,6 @@ jobs:
           # Run the new container on the appropriate environment
           NEW_CONTAINER_NAME=xhip-desk-app-$NEW_ENV
           docker run -d -p $NEW_PORT:3000 --name $NEW_CONTAINER_NAME ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
-          
-          until [ "$(docker inspect --format='{{.State.Health.Status}}' $NEW_CONTAINER_NAME)" == "healthy" ]; do
-            echo "Waiting for $NEW_CONTAINER_NAME to be healthy..."
-            sleep 5
-          done
 
           # Stop and remove the old container
           docker stop xhip-desk-app-$OLD_ENV || true
