@@ -66,10 +66,11 @@ jobs:
           docker run -d -p $NEW_PORT:3000 --name $NEW_CONTAINER_NAME ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
           
           # Check if the new container is healthy
-          until [ "$(docker inspect -f {{.State.Health.Status}} $NEW_CONTAINER_NAME)" == "healthy" ]; do
+          until [ "$(docker inspect --format='{{json .State.Health.Status}}' $NEW_CONTAINER_NAME)" == "\"healthy\"" ]; do
             echo "Waiting for $NEW_CONTAINER_NAME to be healthy..."
             sleep 5
           done
+
 
           
           # Stop and remove the old container
