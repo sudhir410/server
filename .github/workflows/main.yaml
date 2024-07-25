@@ -65,13 +65,11 @@ jobs:
           NEW_CONTAINER_NAME=xhip-desk-app-$NEW_ENV
           docker run -d -p $NEW_PORT:3000 --name $NEW_CONTAINER_NAME ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
           
-          # Wait for the new container to be ready (customize this check as needed)
-          sleep 30  # Adjust the sleep time based on your application's startup time
-          
-          # Update the NGINX configuration to point to the new container
-          sudo sed -i "s/xhip-desk-app-$OLD_ENV:xhip-desk-app-$OLD_PORT/xhip-desk-app-$NEW_ENV:xhip-desk-app-$NEW_PORT/" /etc/nginx/conf.d/my_app.conf
-          sudo nginx -s reload
-
+          # Check if the new container is healthy
+          until [ "$(docker inspect -f {{.State.Health.Status}} $NEW_CONTAINER_NAME)" == "healthy" ]; do
+            echo "Waiting for $NEW_CONTAINER_NAME to be healthy..."
+            sleep 5
+          done
 
           
           # Stop and remove the old container
