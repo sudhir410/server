@@ -69,7 +69,7 @@ jobs:
           sleep 30  # Adjust the sleep time based on your application's startup time
           
           # Update the NGINX configuration to point to the new container
-          sudo sed -i "s/xhip-desk-app-$OLD_ENV:xhip-desk-app-$OLD_PORT/xhip-desk-app-$NEW_ENV:xhip-desk-app-$NEW_PORT/" /etc/nginx/conf.d/default.conf && sudo nginx -s reload
+          sudo sed -i "s/xhip-desk-app-$OLD_ENV:xhip-desk-app-$OLD_PORT/xhip-desk-app-$NEW_ENV:xhip-desk-app-$NEW_PORT/" /etc/nginx/nginx.conf && sudo nginx -s reload
           
           # Stop and remove the old container
           docker stop xhip-desk-app-$OLD_ENV || true
