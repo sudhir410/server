@@ -44,27 +44,27 @@ jobs:
         script: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
-          # docker stop xhip-desk-app || true
-          # docker rm xhip-desk-app || true
-          # docker run -d -p 3000:3000 --name xhip-desk-app ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
 
-           # Determine which environment is currently active (Blue or Green)
+          # Determine which environment is currently active (Blue or Green)
           if [ $(docker ps -q -f name=xhip-desk-app-blue) ]; then
             NEW_ENV=green
             OLD_ENV=blue
-            NEW_PORT=3001
-            OLD_PORT=3000
           else
             NEW_ENV=blue
             OLD_ENV=green
-            NEW_PORT=3000
-            OLD_PORT=3001
           fi
           
           # Run the new container on the appropriate environment
           NEW_CONTAINER_NAME=xhip-desk-app-$NEW_ENV
-          docker run -d -p $NEW_PORT:3000 --name $NEW_CONTAINER_NAME ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
-
+          docker run -d --name $NEW_CONTAINER_NAME ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+          
+          # Wait for the new container to be ready (using health check)
+          timeout 300 bash -c 'until curl -s http://localhost:3000/health | grep -q "OK"; do sleep 5; done'
+          
+          # Update the NGINX configuration to point to the new container
+          sudo sed -i "s/xhip-desk-app-$OLD_ENV/xhip-desk-app-$NEW_ENV/" /etc/nginx/conf.d/default.conf
+          sudo nginx -s reload
+          
           # Stop and remove the old container
           docker stop xhip-desk-app-$OLD_ENV || true
           docker rm xhip-desk-app-$OLD_ENV || true
