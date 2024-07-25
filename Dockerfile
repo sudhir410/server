@@ -1,8 +1,10 @@
 FROM node
 
-WORKDIR /app .
 
-COPY package*.json .
+WORKDIR /home/node/app
+
+COPY package*.json ./
+
 
 RUN npm install
 
