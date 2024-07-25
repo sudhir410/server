@@ -54,6 +54,7 @@ jobs:
             OLD_ENV=green
           fi
           
+          
           # Run the new container on the appropriate environment
           NEW_CONTAINER_NAME=xhip-desk-app-$NEW_ENV
           docker run -d --name $NEW_CONTAINER_NAME ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
