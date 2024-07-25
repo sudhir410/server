@@ -77,4 +77,3 @@ jobs:
           # Stop and remove the old container
           docker stop xhip-desk-app-$OLD_ENV || true
           docker rm xhip-desk-app-$OLD_ENV || true
-      
